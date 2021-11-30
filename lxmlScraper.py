@@ -42,11 +42,19 @@ def webReader(pageUrl, fileName):
             data=rowElement.text_content() 
             data = data.strip()
             data = data.replace("Utd", "United")
+            data = data.replace("Wolverhampton Wanderers", "Wolves")
             data = data.replace("F.C.", "")
             column[columnIndex][1].append(data)
             # Next column
             columnIndex= columnIndex + 1
-    
+
+        #Check for multiple empty cells, remove empty row if true
+        if(tableRows[j][1].text_content().strip()=="" and tableRows[j][2].text_content().strip()=="" and tableRows[j][3].text_content().strip()==""):  
+            columnIndex= columnIndex - 1
+            for rowElement in tableRows[j].iterchildren():
+                column[columnIndex][1].pop()
+                columnIndex= columnIndex - 1
+
     # Convert result to dictionary
     dictionaryResult = {heading:column for (heading,column) in column}
     # Convert dictionary to dataframe
@@ -64,7 +72,6 @@ def dataCleaner(scoresFileName, standingsFileName, wagesFileName):
 'HomeTeamSeasonGoalsScoredSoFar7', 'HomeTeamSeasonGoalsConcededSoFar8','HomeTeamPreviousSeasonPos9', 'HomeTeamValue10', 'FTAwayGoals11', 'AwayTeam12','AwayTeamWinStreak13', 'AwayTeamSeasonWinsSoFar14', 'AwayTeamSeasonPointsSoFar15', 'AwayTeamSeasonGoalsScoredSoFar16', 'AwayTeamSeasonGoalsConcededSoFar17','AwayTeamPreviousSeasonPos18', 'AwayTeamValue19', 'MatchResult']     ##Leaving index position of columns in for the moment 
     newRowArray = []
     for index, row in dataframe.iterrows():
-        
         homeTeamFullTimeGoals = str(row['Score'])[0]
         awayTeamFullTimeGoals = str(row['Score'])[len(str(row['Score'])) - 1]
         if(homeTeamFullTimeGoals == "n"): homeTeamFullTimeGoals = 0
@@ -101,15 +108,14 @@ def dataCleaner(scoresFileName, standingsFileName, wagesFileName):
         
         if(homeTeamValue.empty): homeTeamValue = -1
         elif (len(homeTeamValue['Est. Total Salary'].values) > 0): 
-            homeTeamValue = homeTeamValue['Est. Total Salary'].values[0]
-            homeTeamValue = "£" + homeTeamValue[1:]
+            homeTeamValue = str(homeTeamValue['Est. Total Salary'].values[0]).replace(",","").replace("£","")
+            # homeTeamValue = "£" + homeTeamValue[1:]
             #homeTeamValue = homeTeamValue.replace("Â£", "£")
 
         if(awayTeamValue.empty): awayTeamValue = -1
         elif (len(awayTeamValue['Est. Total Salary'].values) > 0): 
-            awayTeamValue = awayTeamValue['Est. Total Salary'].values[0]
-            awayTeamValue = "£" + awayTeamValue[1:]
-
+            awayTeamValue = str(awayTeamValue['Est. Total Salary'].values[0]).replace(",","").replace("£","")
+            # awayTeamValue = "£" + awayTeamValue[1:]
 
         
         if (row['Wk'] > 1):
@@ -179,10 +185,12 @@ def dataCleaner(scoresFileName, standingsFileName, wagesFileName):
                 if(index - prevGameOffset == 0): break 
                 prevGameOffset += 1;
 
-        
-        newRowObj = [ row['Wk'],  row['Attendance'], homeTeamFullTimeGoals, row['Home'], homeTeamWinStreak, homeTeamWinsSoFar, homeTeamPointsSoFar, homeTeamGoalsSoFar, homeTeamGoalsConcededSoFar, homeTeamLastYear, homeTeamValue, awayTeamFullTimeGoals, row['Away'], awayTeamWinStreak, awayTeamWinsSoFar, awayTeamPointsSoFar, awayTeamGoalsSoFar, awayTeamGoalsConcededSoFar, awayTeamLastYear, awayTeamValue, matchResult]        
+        # Need to fix attendance being NaN in csv
+        attendance = str(row['Attendance']).replace(",","")
+    
+        newRowObj = [ row['Wk'],  attendance, homeTeamFullTimeGoals, row['Home'], homeTeamWinStreak, homeTeamWinsSoFar, homeTeamPointsSoFar, homeTeamGoalsSoFar, homeTeamGoalsConcededSoFar, homeTeamLastYear, homeTeamValue, awayTeamFullTimeGoals, row['Away'], awayTeamWinStreak, awayTeamWinsSoFar, awayTeamPointsSoFar, awayTeamGoalsSoFar, awayTeamGoalsConcededSoFar, awayTeamLastYear, awayTeamValue, matchResult]        
         newRowArray.append(newRowObj)
-        
+            
     cleanedData = pd.DataFrame(newRowArray, columns = cleanedHeaders)
     cleanedData.to_csv("cleaned" + scoresFileName);
         
