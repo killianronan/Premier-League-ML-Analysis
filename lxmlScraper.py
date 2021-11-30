@@ -7,7 +7,6 @@ import numpy as np
 #from tempfile import NamedTemporaryFile
 #import shutil
 
-
 def webReader(pageUrl, fileName):
     #URL for scraping
     url = pageUrl
@@ -62,17 +61,25 @@ def dataCleaner(scoresFileName, standingsFileName, wagesFileName):
     wagesDataFrame = pd.read_csv(wagesFileName)
     cleanedHeaders = ['Weeknumber0', 'Attendance1', 'FTHomeGoals2', 'HomeTeam3', 'HomeTeamWinStreak4', 
 'HomeTeamSeasonWinsSoFar5', 'HomeTeamSeasonPointsSoFar6', 
-'HomeTeamSeasonGoalsScoredSoFar7', 'HomeTeamSeasonGoalsConcededSoFar8','HomeTeamPreviousSeasonPos9', 'HomeTeamValue10', 'FTAwayGoals11', 'AwayTeam12','AwayTeamWinStreak13', 'AwayTeamSeasonWinsSoFar14', 'AwayTeamSeasonPointsSoFar15', 'AwayTeamSeasonGoalsScoredSoFar16', 'AwayTeamSeasonGoalsConcededSoFar17','AwayTeamPreviousSeasonPos18', 'AwayTeamValue19']     ##Leaving index position of columns in for the moment 
+'HomeTeamSeasonGoalsScoredSoFar7', 'HomeTeamSeasonGoalsConcededSoFar8','HomeTeamPreviousSeasonPos9', 'HomeTeamValue10', 'FTAwayGoals11', 'AwayTeam12','AwayTeamWinStreak13', 'AwayTeamSeasonWinsSoFar14', 'AwayTeamSeasonPointsSoFar15', 'AwayTeamSeasonGoalsScoredSoFar16', 'AwayTeamSeasonGoalsConcededSoFar17','AwayTeamPreviousSeasonPos18', 'AwayTeamValue19', 'MatchResult']     ##Leaving index position of columns in for the moment 
     newRowArray = []
     for index, row in dataframe.iterrows():
         
         homeTeamFullTimeGoals = str(row['Score'])[0]
         awayTeamFullTimeGoals = str(row['Score'])[len(str(row['Score'])) - 1]
-        if(homeTeamFullTimeGoals == "n"): homeTeamFullTimeGoals = None
-        if(awayTeamFullTimeGoals == "n"): awayTeamFullTimeGoals = None
-        if(homeTeamFullTimeGoals is not None): homeTeamFullTimeGoals = int(homeTeamFullTimeGoals)   #Convert strings back to ints
-        if(awayTeamFullTimeGoals is not None): awayTeamFullTimeGoals = int(awayTeamFullTimeGoals)
+        if(homeTeamFullTimeGoals == "n"): homeTeamFullTimeGoals = 0
+        if(awayTeamFullTimeGoals == "n"): awayTeamFullTimeGoals = 0
+        if(homeTeamFullTimeGoals != 0): homeTeamFullTimeGoals = int(homeTeamFullTimeGoals)   #Convert strings back to ints
+        if(awayTeamFullTimeGoals != 0): awayTeamFullTimeGoals = int(awayTeamFullTimeGoals)
         
+        matchResult = ''
+        if(homeTeamFullTimeGoals > awayTeamFullTimeGoals):
+            matchResult = 'H'
+        elif(homeTeamFullTimeGoals < awayTeamFullTimeGoals):
+            matchResult = 'A'
+        elif(homeTeamFullTimeGoals == awayTeamFullTimeGoals):
+            matchResult = 'D'
+
         homeTeamWinStreak = 0
         homeTeamWinsSoFar = 0
         homeTeamPointsSoFar = 0
@@ -173,7 +180,7 @@ def dataCleaner(scoresFileName, standingsFileName, wagesFileName):
                 prevGameOffset += 1;
 
         
-        newRowObj = [ row['Wk'],  row['Attendance'], homeTeamFullTimeGoals, row['Home'], homeTeamWinStreak, homeTeamWinsSoFar, homeTeamPointsSoFar, homeTeamGoalsSoFar, homeTeamGoalsConcededSoFar, homeTeamLastYear, homeTeamValue, awayTeamFullTimeGoals, row['Away'], awayTeamWinStreak, awayTeamWinsSoFar, awayTeamPointsSoFar, awayTeamGoalsSoFar, awayTeamGoalsConcededSoFar, awayTeamLastYear, awayTeamValue]        
+        newRowObj = [ row['Wk'],  row['Attendance'], homeTeamFullTimeGoals, row['Home'], homeTeamWinStreak, homeTeamWinsSoFar, homeTeamPointsSoFar, homeTeamGoalsSoFar, homeTeamGoalsConcededSoFar, homeTeamLastYear, homeTeamValue, awayTeamFullTimeGoals, row['Away'], awayTeamWinStreak, awayTeamWinsSoFar, awayTeamPointsSoFar, awayTeamGoalsSoFar, awayTeamGoalsConcededSoFar, awayTeamLastYear, awayTeamValue, matchResult]        
         newRowArray.append(newRowObj)
         
     cleanedData = pd.DataFrame(newRowArray, columns = cleanedHeaders)
