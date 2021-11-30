@@ -185,8 +185,9 @@ def dataCleaner(scoresFileName, standingsFileName, wagesFileName):
                 if(index - prevGameOffset == 0): break 
                 prevGameOffset += 1;
 
-        # Need to fix attendance being NaN in csv
         attendance = str(row['Attendance']).replace(",","")
+        if(attendance=="nan"):
+            attendance = 0
     
         newRowObj = [ row['Wk'],  attendance, homeTeamFullTimeGoals, row['Home'], homeTeamWinStreak, homeTeamWinsSoFar, homeTeamPointsSoFar, homeTeamGoalsSoFar, homeTeamGoalsConcededSoFar, homeTeamLastYear, homeTeamValue, awayTeamFullTimeGoals, row['Away'], awayTeamWinStreak, awayTeamWinsSoFar, awayTeamPointsSoFar, awayTeamGoalsSoFar, awayTeamGoalsConcededSoFar, awayTeamLastYear, awayTeamValue, matchResult]        
         newRowArray.append(newRowObj)
