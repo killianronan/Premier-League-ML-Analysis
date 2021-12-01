@@ -39,15 +39,8 @@ matchResult = scores1819.iloc[:,21]
 
 features1819 = np.column_stack((attendance,HomeWinStreak,HomeTotalPoints,HomeTotalGoalsScored,HomeTotalGoalsConceded,HomePreviousSeasonPoints,HomeTeamValue,AwayWinStreak,AwayTotalPoints,AwayTotalGoalsScored,AwayTotalGoalsConceded,AwayPreviousSeasonPoints,AwayTeamValue)) 
 
-def modelTraining(features, output, gameweek, rowIndex):    
-    model = LogisticRegression(max_iter=1000, C=0.1, penalty="l2")
-    model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
-    predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-    probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
-
-    print("* LogisticRegression *") 
-    print("Row: ", rowIndex) 
-    print("Gameweek: ", gameweek) 
+def printPerformance(probabilities, predictions, output, rowIndex, title):
+    print(title) 
     # Alphabetical order left to right
     print("Probabilities: ", probabilities)
     print("Predicted result: ",predictions)
@@ -57,49 +50,37 @@ def modelTraining(features, output, gameweek, rowIndex):
     print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
     print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
 
+def LogisticReg(features, output, rowIndex): 
+    model = LogisticRegression(max_iter=1000, C=0.1, penalty="l2")
+    model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
+    predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+    probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
+    printPerformance(probabilities, predictions, output, rowIndex, "* LogisticRegression *")
+
+
+def knn(features, output, rowIndex): 
     model = KNeighborsClassifier(n_neighbors=4, weights='uniform')
     model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
     probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+    printPerformance(probabilities, predictions, output, rowIndex, "* KNeighborsClassifier *")
 
-    print("* KNeighborsClassifier *") 
-    print("Row: ", rowIndex) 
-    print("Gameweek: ", gameweek) 
-    # Alphabetical order left to right
-    print("Probabilities: ", probabilities)
-    print("Predicted result: ",predictions)
-    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
-    print("\n")
-
-    print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
-    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
-
+def randomClassifier(features, output, rowIndex): 
     dummy_clf = DummyClassifier(strategy="uniform")
     dummy_clf.fit(features[0:rowIndex-10], output[0:rowIndex-10])
-    probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
+    probabilities = dummy_clf.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
     predictions = dummy_clf.predict(np.array(features[rowIndex-10:rowIndex+1]))
-    print("* RandomClassifier *") 
-    print("Row: ", rowIndex) 
-    print("Gameweek: ", gameweek) 
-    # Alphabetical order left to right
-    print("Probabilities: ", probabilities)
-    print("Predicted result: ",predictions)
-    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
-    print("\n")
-    # f1Scores = cross_val_score(model, predictions, np.array(output[rowIndex-10:rowIndex+1]), scoring='f1', cv=3) # f1 scores
-    print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
-    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
+    printPerformance(probabilities, predictions, output, rowIndex, "* RandomClassifier *")
 
+def lassoReg(features, output, rowIndex): 
     C=1
     linearOutput = np.where(output == 'A', -1, output)
     linearOutput = np.where(linearOutput == 'H', 1, linearOutput)
-    linearOutput = np.where(linearOutput == 'D', 0, linearOutput)    
+    linearOutput = np.where(linearOutput == 'D', 0, linearOutput)
     model = linear_model.Lasso(alpha=1/(2*C))
     model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
     print("* Lasso *") 
-    print("Row: ", rowIndex) 
-    print("Gameweek: ", gameweek) 
     # Alphabetical order left to right
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
@@ -107,22 +88,35 @@ def modelTraining(features, output, gameweek, rowIndex):
     # print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
     # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
 
+def ridgeReg(features, output, rowIndex): 
     C=1
+    # Try different values for C
+    linearOutput = np.where(output == 'A', -1, output)
+    linearOutput = np.where(linearOutput == 'H', 1, linearOutput)
+    linearOutput = np.where(linearOutput == 'D', 0, linearOutput)
     model = linear_model.Ridge(alpha=1/(2*C))
     model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
     print("* Ridge *") 
-    print("Row: ", rowIndex) 
-    print("Gameweek: ", gameweek) 
     # Alphabetical order left to right
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     print("\n")
+    # print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
+    # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
+
+def modelTraining(features, output, rowIndex):    
+    LogisticReg(features, output, rowIndex)
+    knn(features, output, rowIndex)
+    randomClassifier(features, output, rowIndex)
+    lassoReg(features, output, rowIndex)
+    ridgeReg(features, output, rowIndex)
 
 rowIndex = 11
 gameweek = 2
 while gameweek < 39: #380 matches played by 20 teams 
     rowIndex+=10
+    print("Gameweek: ", gameweek) 
     gameweekFeatures = np.column_stack((attendance[0:rowIndex],HomeWinStreak[0:rowIndex],HomeTotalPoints[0:rowIndex],HomeTotalGoalsScored[0:rowIndex],HomeTotalGoalsConceded[0:rowIndex],HomePreviousSeasonPoints[0:rowIndex],HomeTeamValue[0:rowIndex],AwayWinStreak[0:rowIndex],AwayTotalPoints[0:rowIndex],AwayTotalGoalsScored[0:rowIndex],AwayTotalGoalsConceded[0:rowIndex],AwayPreviousSeasonPoints[0:rowIndex],AwayTeamValue[0:rowIndex]))
-    modelTraining(gameweekFeatures, matchResult[0:rowIndex], gameweek, rowIndex)
+    modelTraining(gameweekFeatures, matchResult[0:rowIndex], rowIndex)
     gameweek+=1
