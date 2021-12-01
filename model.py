@@ -49,6 +49,10 @@ def printPerformance(probabilities, predictions, output, rowIndex, title):
     print("\n")
     print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
     print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
+    # ConfusionMatrixDisplay.from_predictions(np.array(output[rowIndex-10:rowIndex+1]), predictions)
+    # title = "Confusion Matrix " + title + " Gameweek " + str(gameweek)
+    # plt.title(title)
+    # plt.show()
 
 def LogisticReg(features, output, rowIndex): 
     model = LogisticRegression(max_iter=1000, C=0.1, penalty="l2")
@@ -56,7 +60,6 @@ def LogisticReg(features, output, rowIndex):
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
     probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
     printPerformance(probabilities, predictions, output, rowIndex, "* LogisticRegression *")
-
 
 def knn(features, output, rowIndex): 
     model = KNeighborsClassifier(n_neighbors=4, weights='uniform')
@@ -85,8 +88,6 @@ def lassoReg(features, output, rowIndex):
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     print("\n")
-    # print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
-    # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
 
 def ridgeReg(features, output, rowIndex): 
     C=1
@@ -102,15 +103,13 @@ def ridgeReg(features, output, rowIndex):
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     print("\n")
-    # print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
-    # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
 
 def modelTraining(features, output, rowIndex):    
     LogisticReg(features, output, rowIndex)
-    knn(features, output, rowIndex)
-    randomClassifier(features, output, rowIndex)
-    lassoReg(features, output, rowIndex)
-    ridgeReg(features, output, rowIndex)
+    # knn(features, output, rowIndex)
+    # randomClassifier(features, output, rowIndex)
+    # lassoReg(features, output, rowIndex)
+    # ridgeReg(features, output, rowIndex)
 
 rowIndex = 11
 gameweek = 2
