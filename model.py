@@ -41,7 +41,6 @@ features1819 = np.column_stack((attendance,HomeWinStreak,HomeTotalPoints,HomeTot
 
 def modelTraining(features, output, gameweek, rowIndex):    
     model = LogisticRegression(max_iter=1000, C=0.1, penalty="l2")
-
     model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
     probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
@@ -53,7 +52,7 @@ def modelTraining(features, output, gameweek, rowIndex):
     print("Probabilities: ", probabilities)
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
-    # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions))
+    # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions,  multi_class='ovr'))
     print("\n")
     print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
     print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
