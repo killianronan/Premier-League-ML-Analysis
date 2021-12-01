@@ -11,6 +11,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import roc_curve
 from sklearn import metrics
+from sklearn import linear_model
 
 scores1819 = pd.read_csv("cleaned201819scores.csv")
 weekNumber = scores1819.iloc[:,1]
@@ -53,13 +54,12 @@ def modelTraining(features, output, gameweek, rowIndex):
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     print("\n")
     print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
-    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
+    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
 
     model = KNeighborsClassifier(n_neighbors=4, weights='uniform')
     model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
     probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-
 
     print("* KNeighborsClassifier *") 
     print("Row: ", rowIndex) 
@@ -72,6 +72,51 @@ def modelTraining(features, output, gameweek, rowIndex):
 
     print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
     print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
+
+    dummy_clf = DummyClassifier(strategy="uniform")
+    dummy_clf.fit(features[0:rowIndex-10], output[0:rowIndex-10])
+    probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
+    predictions = dummy_clf.predict(np.array(features[rowIndex-10:rowIndex+1]))
+    print("* RandomClassifier *") 
+    print("Row: ", rowIndex) 
+    print("Gameweek: ", gameweek) 
+    # Alphabetical order left to right
+    print("Probabilities: ", probabilities)
+    print("Predicted result: ",predictions)
+    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
+    print("\n")
+    # f1Scores = cross_val_score(model, predictions, np.array(output[rowIndex-10:rowIndex+1]), scoring='f1', cv=3) # f1 scores
+    print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
+    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
+
+    C=1
+    linearOutput = np.where(output == 'A', -1, output)
+    linearOutput = np.where(linearOutput == 'H', 1, linearOutput)
+    linearOutput = np.where(linearOutput == 'D', 0, linearOutput)    
+    model = linear_model.Lasso(alpha=1/(2*C))
+    model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
+    predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+    print("* Lasso *") 
+    print("Row: ", rowIndex) 
+    print("Gameweek: ", gameweek) 
+    # Alphabetical order left to right
+    print("Predicted result: ",predictions)
+    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
+    print("\n")
+    # print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
+    # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
+
+    C=1
+    model = linear_model.Ridge(alpha=1/(2*C))
+    model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
+    predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+    print("* Ridge *") 
+    print("Row: ", rowIndex) 
+    print("Gameweek: ", gameweek) 
+    # Alphabetical order left to right
+    print("Predicted result: ",predictions)
+    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
+    print("\n")
 
 rowIndex = 11
 gameweek = 2
