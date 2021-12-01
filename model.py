@@ -1,5 +1,6 @@
 from re import match
-import numpy as np# id:5--5--5-0 
+import numpy as np
+from numpy.lib.function_base import average# id:5--5--5-0 
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
@@ -36,9 +37,39 @@ AwayTotalGoalsConceded = scores1819.iloc[:,18]
 AwayPreviousSeasonPoints = scores1819.iloc[:,19]
 AwayTeamValue = scores1819.iloc[:,20]
 matchResult = scores1819.iloc[:,21]
-
 features1819 = np.column_stack((attendance,HomeWinStreak,HomeTotalPoints,HomeTotalGoalsScored,HomeTotalGoalsConceded,HomePreviousSeasonPoints,HomeTeamValue,AwayWinStreak,AwayTotalPoints,AwayTotalGoalsScored,AwayTotalGoalsConceded,AwayPreviousSeasonPoints,AwayTeamValue)) 
 
+def calulateMetrics(confusion_m): 
+    tpA = confusion_m[0]
+    tnA = confusion_m[4]+confusion_m[5]+confusion_m[7]+confusion_m[8]
+    fpA = confusion_m[3]+confusion_m[6]
+    fnA = confusion_m[1]+confusion_m[2]
+    accuracyA = (tnA + tpA)/(tnA + fpA + tpA + fnA)
+    precisionA = (tpA)/(tpA + fpA)
+    recallA = (tpA)/(tpA + fnA)
+    f1ScoreA = 2 * ((precisionA * recallA)/(precisionA + recallA))
+
+    tpH = confusion_m[8]
+    tnH = confusion_m[0]+confusion_m[1]+confusion_m[3]+confusion_m[4]
+    fpH = confusion_m[2]+confusion_m[5]
+    fnH = confusion_m[6]+confusion_m[7]
+    accuracyH = (tnH + tpH)/(tnH + fpH + tpH + fnH)
+    precisionH = (tpH)/(tpH + fpH)
+    recallH = (tpH)/(tpH + fnH)
+    f1ScoreH = 2 * ((precisionH * recallH)/(precisionH + recallH))
+
+    tpD = confusion_m[4]
+    tnD = confusion_m[0]+confusion_m[2]+confusion_m[6]+confusion_m[8]
+    fpD = confusion_m[1]+confusion_m[7]
+    fnD = confusion_m[3]+confusion_m[5]
+    accuracyD = (tnD + tpD)/(tnD + fpD + tpD + fnD)
+    precisionD = (tpD)/(tpD + fpD)
+    recallD = (tpD)/(tpD + fnD)
+    f1ScoreD = 2 * ((precisionD * recallD)/(precisionD + recallD))
+
+    # Return metric once we decide what to use
+    # return accuracyD, precisionD, accuracyA, precisionA ... etc
+    
 def printPerformance(probabilities, predictions, output, rowIndex, title):
     print(title) 
     # Alphabetical order left to right
@@ -47,8 +78,12 @@ def printPerformance(probabilities, predictions, output, rowIndex, title):
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions,  multi_class='ovr'))
     print("\n")
-    print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
-    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
+    confusion_m = confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel()
+    print(len(confusion_m))
+    if(len(confusion_m)==9): # Gameweek 17 had no Draws so confusion matrix is 2x2 (need to handle this)
+        calulateMetrics(confusion_m)
+
+    # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
     # ConfusionMatrixDisplay.from_predictions(np.array(output[rowIndex-10:rowIndex+1]), predictions)
     # title = "Confusion Matrix " + title + " Gameweek " + str(gameweek)
     # plt.title(title)
