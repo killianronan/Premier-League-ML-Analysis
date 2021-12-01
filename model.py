@@ -12,6 +12,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.metrics import roc_curve
 from sklearn import metrics
 from sklearn import linear_model
+from sklearn.metrics import roc_auc_score
 
 scores1819 = pd.read_csv("cleaned201819scores.csv")
 weekNumber = scores1819.iloc[:,1]
@@ -52,6 +53,7 @@ def modelTraining(features, output, gameweek, rowIndex):
     print("Probabilities: ", probabilities)
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
+    # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions))
     print("\n")
     print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
     print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
