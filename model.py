@@ -10,6 +10,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import roc_curve
+from sklearn import metrics
 
 scores1819 = pd.read_csv("cleaned201819scores.csv")
 weekNumber = scores1819.iloc[:,1]
@@ -37,28 +38,40 @@ matchResult = scores1819.iloc[:,21]
 features1819 = np.column_stack((attendance,HomeWinStreak,HomeTotalPoints,HomeTotalGoalsScored,HomeTotalGoalsConceded,HomePreviousSeasonPoints,HomeTeamValue,AwayWinStreak,AwayTotalPoints,AwayTotalGoalsScored,AwayTotalGoalsConceded,AwayPreviousSeasonPoints,AwayTeamValue)) 
 
 def modelTraining(features, output, gameweek, rowIndex):    
-    model = LogisticRegression(max_iter=1000, C=10, penalty="l2")
+    model = LogisticRegression(max_iter=1000, C=0.1, penalty="l2")
 
     model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+    probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
 
     print("* LogisticRegression *") 
     print("Row: ", rowIndex) 
     print("Gameweek: ", gameweek) 
+    # Alphabetical order left to right
+    print("Probabilities: ", probabilities)
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     print("\n")
+    print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
+    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
 
     model = KNeighborsClassifier(n_neighbors=4, weights='uniform')
     model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
+    probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+
 
     print("* KNeighborsClassifier *") 
     print("Row: ", rowIndex) 
     print("Gameweek: ", gameweek) 
+    # Alphabetical order left to right
+    print("Probabilities: ", probabilities)
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     print("\n")
+
+    print(confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel())
+    print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3))
 
 rowIndex = 11
 gameweek = 2
