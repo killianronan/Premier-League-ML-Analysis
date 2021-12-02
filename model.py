@@ -51,7 +51,7 @@ def calulateMetrics(confusion_m):
     precisionA = (tpA)/(tpA + fpA)
     recallA = (tpA)/(tpA + fnA)
     f1ScoreA = 2 * ((precisionA * recallA)/(precisionA + recallA))
-    print("F1A: ", f1ScoreA)
+    # print("F1A: ", f1ScoreA)
 
     tpH = confusion_m[8]
     tnH = confusion_m[0]+confusion_m[1]+confusion_m[3]+confusion_m[4]
@@ -63,7 +63,7 @@ def calulateMetrics(confusion_m):
     recallH = (tpH)/(tpH + fnH)
     if (precisionH == 0 or recallH == 0): f1ScoreH = 0
     else: f1ScoreH = 2 * ((precisionH * recallH)/(precisionH + recallH))
-    print("F1H: ", f1ScoreH)
+    # print("F1H: ", f1ScoreH)
 
     tpD = confusion_m[4]
     tnD = confusion_m[0]+confusion_m[2]+confusion_m[6]+confusion_m[8]
@@ -71,27 +71,28 @@ def calulateMetrics(confusion_m):
     fnD = confusion_m[3]+confusion_m[5]
     # print("tpD:", tpD, "tnD: ", tnD, "fpD:", fpD, "fnD: ", fnD)
     accuracyD = (tnD + tpD)/(tnD + fpD + tpD + fnD)
-    precisionD = (tpD)/(tpD + fpD)
+    if (tpD + fpD == 0): precisionD = 0
+    else: precisionD = (tpD)/(tpD + fpD)
     recallD = (tpD)/(tpD + fnD)
     if (precisionD == 0 or recallD == 0): f1ScoreD = 0
     else: f1ScoreD = 2 * ((precisionD * recallD)/(precisionD + recallD))
-    print("F1D: ", f1ScoreD)
+    # print("F1D: ", f1ScoreD)
 
     f1ScoreTotal = (f1ScoreA + f1ScoreH + f1ScoreD) / 3
     return f1ScoreTotal
     # Return metric once we decide what to use
     # return accuracyD, precisionD, accuracyA, precisionA ... etc
     
-def printPerformance(probabilities, predictions, output, rowIndex, C, f1_scores, title):
-    print(title+" for C: "+str(C)) 
+def printPerformance(probabilities, linearOutput, predictions, output, rowIndex, C, f1_scores, title):
+    # print(title+" for C: "+str(C)) 
     # Alphabetical order left to right
     #print("Probabilities: ", probabilities)
     #print("Predicted result: ",predictions)
     #print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
     # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions,  multi_class='ovr'))
-    print("\n")
-    confusion_m = confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel()
-    print("Confusion Matrix", confusion_m)
+    if (probabilities == 0): confusion_m = confusion_matrix(linearOutput, predictions).ravel()
+    else: confusion_m = confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel()
+    # print("Confusion Matrix", confusion_m)
     if(len(confusion_m)==9): # Gameweek 17 had no Draws so confusion matrix is 2x2 (need to handle this)
         newF1 = calulateMetrics(confusion_m)
         f1_scores.append(newF1)
@@ -107,17 +108,19 @@ def printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f
     predictions[predictions>=.33] = 1
     predictions[abs(predictions)<1] = 0
 
-    print(title+" for C: "+str(C)) 
+    # print(title+" for C: "+str(C)) 
     # Alphabetical order left to right
     #print("Predicted result: ",predictions)
     #print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
 
-    result = np.zeros((10, 1))
-    for i in range(10):
+    result = np.zeros((len(predictions), 1))
+    for i in range(len(predictions)):
         result[i] = linearOutput[i]
     # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions,  multi_class='ovr'))
+    print("result: ", result)
+    print("pred: ", predictions)
     confusion_m = confusion_matrix(result, predictions).ravel()
-    print("Confusion Matrix", confusion_m)
+    # print("Confusion Matrix", confusion_m)
     if(len(confusion_m)==9): # Gameweek 17 had no Draws so confusion matrix is 2x2 (need to handle this)
         newF1 = calulateMetrics(confusion_m)
         f1_scores.append(newF1)
@@ -140,23 +143,24 @@ def convertCharToNumber(actual, predictions):
 
 def KLogisticReg(features, output, rowIndex): 
     Ci_range = [ 
-        0.001, .01, .1, 1, 10, 1000
+        0.001, .01, .1, 1, 10, 100
     ]
-    mean_error=[]; std_error=[]
+    mean_error=[]; std_error=[]; f1_mean = []; f1_std_dev = []
     for C in Ci_range:
         model = LogisticRegression(max_iter=1000, C = C, penalty="l2")
-        temp = []
+        temp = []; f1_scores = []
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], output[train])
             predictions = model.predict(np.array(features[test]))
+            printPerformance(0, output[test], predictions, output, rowIndex, C, f1_scores, "* LogisticReg *")
             convertedActual, convertedPredictions = convertCharToNumber(output,predictions)
             temp.append(mean_squared_error(convertedActual[test],convertedPredictions))
         mean_error.append(np.array(temp).mean())
         std_error.append(np.array(temp).std())
-    print("Mean Error = ", mean_error)
-    print("Standard Deviation Error = ", std_error)
-    # graphErrorBar(Ci_range, mean_error, std_error)
+        f1_mean.append(np.array(f1_scores).mean())
+        f1_std_dev.append(np.array(f1_scores).std())
+    drawGraphs(Ci_range, mean_error, std_error, f1_mean, f1_std_dev, "LogisticReg")
 
 def LogisticReg(features, output, rowIndex): 
     Ci_range = [ 
@@ -170,27 +174,28 @@ def LogisticReg(features, output, rowIndex):
         probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
         printPerformance(probabilities, predictions, output, rowIndex, C, f1_scores, "* LogisticRegression *")
     print("SCORES: ", f1_scores)
-    plotCrossValidation(Ci_range, f1_scores, 'C Values', 'F1 Score', "* logisticReg *")
+    plotF1Score(Ci_range, f1_scores, 'C Values', 'F1 Score', "* logisticReg *")
 
 def Kknn(features, output, rowIndex): 
     Ki_range = [ 
         2, 3, 4, 5, 6
     ]
-    mean_error=[]; std_error=[]
+    mean_error=[]; std_error=[]; f1_mean = []; f1_std_dev = []
     for n_neighbours in Ki_range:
         model = KNeighborsClassifier(n_neighbours, weights='uniform')
-        temp = []
+        temp = []; f1_scores = []
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], output[train])
             predictions = model.predict(np.array(features[test]))
+            printPerformance(0, output[test], predictions, output, rowIndex, n_neighbours, f1_scores, "* KNN *")
             convertedActual, convertedPredictions = convertCharToNumber(output,predictions)
             temp.append(mean_squared_error(convertedActual[test],convertedPredictions))
         mean_error.append(np.array(temp).mean())
         std_error.append(np.array(temp).std())
-    print("Mean Error = ", mean_error)
-    print("Standard Deviation Error = ", std_error)
-    # graphErrorBar(Ci_range, mean_error, std_error)
+        f1_mean.append(np.array(f1_scores).mean())
+        f1_std_dev.append(np.array(f1_scores).std())
+    drawGraphs(Ki_range, mean_error, std_error, f1_mean, f1_std_dev, "KNN")
 
 def knn(features, output, rowIndex): 
     Ki_range = [ 
@@ -204,7 +209,7 @@ def knn(features, output, rowIndex):
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         printPerformance(probabilities, predictions, output, rowIndex, n_neighbours, f1_scores, "* KNeighborsClassifier *")
     print("SCORES: ", f1_scores)
-    plotCrossValidation(Ki_range, f1_scores, 'C Values', 'F1 Score', "* KNN *")
+    plotF1Score(Ki_range, f1_scores, 'C Values', 'F1 Score', "* KNN *")
 
 def randomClassifier(features, output, rowIndex): 
     dummy_clf = DummyClassifier(strategy="uniform")
@@ -214,28 +219,27 @@ def randomClassifier(features, output, rowIndex):
     printPerformance(probabilities, predictions, output, rowIndex, "* RandomClassifier *")
 
 def KLassoReg(features, output, rowIndex): 
-    C=1
     linearOutput = np.where(output == 'A', -1.0, output)
     linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
     linearOutput = np.where(linearOutput == 'D', 0.0, linearOutput)
     Ci_range = [ 
         0.5, 1, 5, 10, 50, 100
     ]
-    mean_error=[]; std_error=[]
+    mean_error=[]; std_error=[]; f1_mean = []; f1_std_dev = []
     for C in Ci_range:
         model = linear_model.Lasso(alpha=1/(2*C), max_iter=2000)# warning said to increase number of iterations
-        temp = []
+        temp = []; f1_scores = []
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], linearOutput[train])
             predictions = model.predict(np.array(features[test]))
-            # printLassoRidgePerformance(linearOutput[test], predictions[test], output, rowIndex, C, "* lassoReg *")
+            printLassoRidgePerformance(linearOutput[test], predictions, output, rowIndex, C, f1_scores, "* lassoReg *")
             temp.append(mean_squared_error(linearOutput[test],predictions))
         mean_error.append(np.array(temp).mean())
         std_error.append(np.array(temp).std())
-    print("Mean Error = ", mean_error)
-    print("Standard Deviation Error = ", std_error)
-    # graphErrorBar(Ci_range, mean_error, std_error)
+        f1_mean.append(np.array(f1_scores).mean())
+        f1_std_dev.append(np.array(f1_scores).std())
+    drawGraphs(Ci_range, mean_error, std_error, f1_mean, f1_std_dev, "lassoReg")
 
 def lassoReg(features, output, rowIndex): 
     #C=1
@@ -253,31 +257,30 @@ def lassoReg(features, output, rowIndex):
         printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f1_scores, "* lassoReg *")
 
     print("SCORES: ", f1_scores)
-    plotCrossValidation(Ci_range, f1_scores, 'C Values', 'F1 Score', "* lassoReg *")
+    plotF1Score(Ci_range, f1_scores, 'C Values', 'F1 Score', "* lassoReg *")
 
 def KRidgeReg(features, output, rowIndex): 
-    C=1
     linearOutput = np.where(output == 'A', -1.0, output)
     linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
     linearOutput = np.where(linearOutput == 'D', 0.0, linearOutput)
     Ci_range = [ 
         0.5, 1, 5, 10, 50, 100
     ]
-    mean_error=[]; std_error=[]
+    mean_error=[]; std_error=[]; f1_mean = []; f1_std_dev = []
     for C in Ci_range:
         model = linear_model.Ridge(alpha=1/(2*C))# warning said to increase number of iterations
-        temp = []
+        temp = []; f1_scores = []
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], linearOutput[train])
             predictions = model.predict(np.array(features[test]))
-            # printLassoRidgePerformance(linearOutput[test], predictions[test], output, rowIndex, C, "* lassoReg *")
+            printLassoRidgePerformance(linearOutput[test], predictions, output, rowIndex, C, f1_scores, "* ridgeReg *")
             temp.append(mean_squared_error(linearOutput[test],predictions))
         mean_error.append(np.array(temp).mean())
         std_error.append(np.array(temp).std())
-    print("Mean Error = ", mean_error)
-    print("Standard Deviation Error = ", std_error)
-    # graphErrorBar(Ci_range, mean_error, std_error)
+        f1_mean.append(np.array(f1_scores).mean())
+        f1_std_dev.append(np.array(f1_scores).std())
+    drawGraphs(Ci_range, mean_error, std_error, f1_mean, f1_std_dev, "ridgeReg")
 
 def ridgeReg(features, output, rowIndex): 
     #C=1
@@ -295,9 +298,17 @@ def ridgeReg(features, output, rowIndex):
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f1_scores, "* ridgeReg *")
     print("SCORES: ", f1_scores)
-    plotCrossValidation(Ci_range, f1_scores, 'C Values', 'F1 Score', "* ridgeReg *")
+    plotF1Score(Ci_range, f1_scores, 'C Values', 'F1 Score', "* ridgeReg *")
 
-def plotCrossValidation(Clist, f1Score, xAxisTitle, yAxisTitle, title):
+def drawGraphs(Ci_range, mean_error, std_error, f1_mean, f1_std_dev, model_name):
+    # print("Mean Error = ", mean_error)
+    # print("Standard Deviation Error = ", std_error)
+    # print("F1 Score Mean = ", f1_mean)
+    # print("F1 Score Standard Deviation = ", f1_std_dev)
+    graphErrorBar(Ci_range, mean_error, std_error, model_name+" 5-fold cross-validation, Mean + Standard Deviation Error Vs C")
+    graphErrorBar(Ci_range, f1_mean, f1_std_dev, model_name+" 5-fold cross-validation, F1 Mean + Standard Deviation Vs C")
+
+def plotF1Score(Clist, f1Score, xAxisTitle, yAxisTitle, title):
     plt.figure()
     plt.rc('font', size=18)
     plt.rcParams['figure.constrained_layout.use'] = True
@@ -307,12 +318,12 @@ def plotCrossValidation(Clist, f1Score, xAxisTitle, yAxisTitle, title):
     plt.title(title)
     plt.show()
 
-def graphErrorBar(Ci_range, mean_error, std_error):
-    plt.title("5-fold cross-validation, Mean + Standard Deviation Error Vs C")
+def graphErrorBar(Ci_range, mean_error, std_error, title):
+    plt.title(title)
     plt.plot(Ci_range, mean_error)
     plt.errorbar(Ci_range, mean_error, yerr=std_error, fmt ='ro', label="Standard Deviation")
     plt.xlabel("Ci") 
-    plt.xlim((0,50))
+    # plt.xlim((0,50))
     plt.ylabel("Mean square error")
     plt.legend()
     plt.show()
@@ -320,17 +331,17 @@ def graphErrorBar(Ci_range, mean_error, std_error):
 def modelTraining(features, output, rowIndex):    
     # KLogisticReg(features, output, rowIndex)
     # LogisticReg(features, output, rowIndex)
-    # Kknn(features, output, rowIndex)
+    Kknn(features, output, rowIndex)
     # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
     # KLassoReg(features, output, rowIndex)
     # lassoReg(features, output, rowIndex)
     # KRidgeReg(features, output, rowIndex)
-    ridgeReg(features, output, rowIndex)
+    # ridgeReg(features, output, rowIndex)
 
 rowIndex = 331
 gameweek = 33
-while gameweek < 39: #380 matches played by 20 teams 
+while gameweek < 34: #380 matches played by 20 teams 
     rowIndex+=10
     print("Gameweek: ", gameweek) 
     gameweekFeatures = np.column_stack((attendance[0:rowIndex],HomeWinStreak[0:rowIndex],HomeTotalPoints[0:rowIndex],HomeTotalGoalsScored[0:rowIndex],HomeTotalGoalsConceded[0:rowIndex],HomePreviousSeasonPoints[0:rowIndex],HomeTeamValue[0:rowIndex],AwayWinStreak[0:rowIndex],AwayTotalPoints[0:rowIndex],AwayTotalGoalsScored[0:rowIndex],AwayTotalGoalsConceded[0:rowIndex],AwayPreviousSeasonPoints[0:rowIndex],AwayTeamValue[0:rowIndex]))
