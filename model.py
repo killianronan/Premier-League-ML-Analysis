@@ -14,6 +14,8 @@ from sklearn.metrics import roc_curve
 from sklearn import metrics
 from sklearn import linear_model
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import KFold
+from sklearn.metrics import mean_squared_error
 
 scores1819 = pd.read_csv("cleaned201819scores.csv")
 weekNumber = scores1819.iloc[:,1]
@@ -44,6 +46,7 @@ def calulateMetrics(confusion_m):
     tnA = confusion_m[4]+confusion_m[5]+confusion_m[7]+confusion_m[8]
     fpA = confusion_m[3]+confusion_m[6]
     fnA = confusion_m[1]+confusion_m[2]
+    # print("tpA:", tpA, "tnA: ", tnA, "fpA:", fpA, "fnA: ", fnA)
     accuracyA = (tnA + tpA)/(tnA + fpA + tpA + fnA)
     precisionA = (tpA)/(tpA + fpA)
     recallA = (tpA)/(tpA + fnA)
@@ -54,6 +57,7 @@ def calulateMetrics(confusion_m):
     tnH = confusion_m[0]+confusion_m[1]+confusion_m[3]+confusion_m[4]
     fpH = confusion_m[2]+confusion_m[5]
     fnH = confusion_m[6]+confusion_m[7]
+    # print("tpH:", tpH, "tnH: ", tnH, "fpH:", fpH, "fnH: ", fnH)
     accuracyH = (tnH + tpH)/(tnH + fpH + tpH + fnH)
     precisionH = (tpH)/(tpH + fpH)
     recallH = (tpH)/(tpH + fnH)
@@ -65,6 +69,7 @@ def calulateMetrics(confusion_m):
     tnD = confusion_m[0]+confusion_m[2]+confusion_m[6]+confusion_m[8]
     fpD = confusion_m[1]+confusion_m[7]
     fnD = confusion_m[3]+confusion_m[5]
+    # print("tpD:", tpD, "tnD: ", tnD, "fpD:", fpD, "fnD: ", fnD)
     accuracyD = (tnD + tpD)/(tnD + fpD + tpD + fnD)
     precisionD = (tpD)/(tpD + fpD)
     recallD = (tpD)/(tpD + fnD)
@@ -209,7 +214,7 @@ def modelTraining(features, output, rowIndex):
     #  LogisticReg(features, output, rowIndex)
     knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
-    # lassoReg(features, output, rowIndex)
+    lassoReg(features, output, rowIndex)
     # ridgeReg(features, output, rowIndex)
 
 rowIndex = 331
