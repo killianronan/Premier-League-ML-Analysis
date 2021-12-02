@@ -56,7 +56,7 @@ def calulateMetrics(confusion_m):
     accuracyH = (tnH + tpH)/(tnH + fpH + tpH + fnH)
     precisionH = (tpH)/(tpH + fpH)
     recallH = (tpH)/(tpH + fnH)
-    f1ScoreH = 2 * ((precisionH * recallH)/(precisionH + recallH))
+    #f1ScoreH = 2 * ((precisionH * recallH)/(precisionH + recallH))
 
     tpD = confusion_m[4]
     tnD = confusion_m[0]+confusion_m[2]+confusion_m[6]+confusion_m[8]
@@ -65,7 +65,7 @@ def calulateMetrics(confusion_m):
     accuracyD = (tnD + tpD)/(tnD + fpD + tpD + fnD)
     precisionD = (tpD)/(tpD + fpD)
     recallD = (tpD)/(tpD + fnD)
-    f1ScoreD = 2 * ((precisionD * recallD)/(precisionD + recallD))
+    #f1ScoreD = 2 * ((precisionD * recallD)/(precisionD + recallD))
 
     # Return metric once we decide what to use
     # return accuracyD, precisionD, accuracyA, precisionA ... etc
@@ -79,7 +79,7 @@ def printPerformance(probabilities, predictions, output, rowIndex, title):
     # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions,  multi_class='ovr'))
     print("\n")
     confusion_m = confusion_matrix(np.array(output[rowIndex-10:rowIndex+1]), predictions).ravel()
-    print(len(confusion_m))
+    print(confusion_m)
     if(len(confusion_m)==9): # Gameweek 17 had no Draws so confusion matrix is 2x2 (need to handle this)
         calulateMetrics(confusion_m)
 
@@ -89,12 +89,12 @@ def printPerformance(probabilities, predictions, output, rowIndex, title):
     # plt.title(title)
     # plt.show()
 
-def printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, title):
+def printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, title):
     predictions[predictions<=-.33] = -1
     predictions[predictions>=.33] = 1
     predictions[abs(predictions)<1] = 0
 
-    print(title) 
+    print(title+" for C: "+str(C)) 
     # Alphabetical order left to right
     print("Predicted result: ",predictions)
     print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
@@ -140,10 +140,14 @@ def lassoReg(features, output, rowIndex):
     linearOutput = np.where(output == 'A', -1.0, output)
     linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
     linearOutput = np.where(linearOutput == 'D', 0.0, linearOutput)
-    model = linear_model.Lasso(alpha=1/(2*C))
-    model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
-    predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-    printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, "* lassoReg *")
+    Ci_range = [ 
+        0.5, 1, 5, 10, 50, 100
+    ]
+    for C in Ci_range:
+        model = linear_model.Lasso(alpha=1/(2*C))
+        model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
+        predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+        printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, "* lassoReg *")
 
 def ridgeReg(features, output, rowIndex): 
     C=1
@@ -151,17 +155,21 @@ def ridgeReg(features, output, rowIndex):
     linearOutput = np.where(output == 'A', -1, output)
     linearOutput = np.where(linearOutput == 'H', 1, linearOutput)
     linearOutput = np.where(linearOutput == 'D', 0, linearOutput)
-    model = linear_model.Ridge(alpha=1/(2*C))
-    model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
-    predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-    printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, "* ridgeReg *")
+    Ci_range = [ 
+        0.5, 1, 5, 10, 50, 100
+    ]
+    for C in Ci_range:
+        model = linear_model.Ridge(alpha=1/(2*C))
+        model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
+        predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
+        printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, "* ridgeReg *")
 
 def modelTraining(features, output, rowIndex):    
     #LogisticReg(features, output, rowIndex)
     # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
-    # lassoReg(features, output, rowIndex)
-     ridgeReg(features, output, rowIndex)
+     lassoReg(features, output, rowIndex)
+    # ridgeReg(features, output, rowIndex)
 
 rowIndex = 101
 gameweek = 10
