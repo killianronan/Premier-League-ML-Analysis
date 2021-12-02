@@ -163,6 +163,29 @@ def randomClassifier(features, output, rowIndex):
     predictions = dummy_clf.predict(np.array(features[rowIndex-10:rowIndex+1]))
     printPerformance(probabilities, predictions, output, rowIndex, "* RandomClassifier *")
 
+def KFlassoReg(features, output, rowIndex): 
+    C=1
+    linearOutput = np.where(output == 'A', -1.0, output)
+    linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
+    linearOutput = np.where(linearOutput == 'D', 0.0, linearOutput)
+    Ci_range = [ 
+        0.5, 1, 5, 10, 50, 100
+    ]
+    mean_error=[]; std_error=[]
+    for C in Ci_range:
+        model = linear_model.Lasso(alpha=1/(2*C), max_iter=2000)# warning said to increase number of iterations
+        temp = []
+        kf = KFold(n_splits=5)
+        for train, test in kf.split(features[0:rowIndex-10]):
+            model.fit(features[train], linearOutput[train])
+            predictions = model.predict(np.array(features[test]))
+            # printLassoRidgePerformance(linearOutput[test], predictions[test], output, rowIndex, C, "* lassoReg *")
+            temp.append(mean_squared_error(linearOutput[test],predictions))
+        mean_error.append(np.array(temp).mean())
+        std_error.append(np.array(temp).std())
+    print("Mean Error = ", mean_error)
+    print("Standard Deviation Error = ", std_error)
+
 def lassoReg(features, output, rowIndex): 
     #C=1
     linearOutput = np.where(output == 'A', -1.0, output)
@@ -212,10 +235,11 @@ def plotCrossValidation(Clist, f1Score, xAxisTitle, yAxisTitle, title):
 
 def modelTraining(features, output, rowIndex):    
     #  LogisticReg(features, output, rowIndex)
-    knn(features, output, rowIndex)
+    # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
-    lassoReg(features, output, rowIndex)
+    # lassoReg(features, output, rowIndex)
     # ridgeReg(features, output, rowIndex)
+    KFlassoReg(features, output, rowIndex)
 
 rowIndex = 331
 gameweek = 33
