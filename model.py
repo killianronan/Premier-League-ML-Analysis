@@ -128,6 +128,36 @@ def printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f
     # plt.title(title)
     # plt.show()
 
+def convertCharToNumber(actual, predictions):
+    actualOutput = np.where(actual == 'A', -1.0, actual)
+    actualOutput = np.where(actualOutput == 'H', 1.0, actualOutput)
+    actualOutput = np.where(actualOutput == 'D', 0.0, actualOutput)
+
+    output = np.where(predictions == 'A', -1.0, predictions)
+    output = np.where(output == 'H', 1.0, output)
+    output = np.where(output == 'D', 0.0, output)
+    return actualOutput, output
+
+def KLogisticReg(features, output, rowIndex): 
+    Ci_range = [ 
+        0.001, .01, .1, 1, 10, 1000
+    ]
+    mean_error=[]; std_error=[]
+    for C in Ci_range:
+        model = LogisticRegression(max_iter=1000, C = C, penalty="l2")
+        temp = []
+        kf = KFold(n_splits=5)
+        for train, test in kf.split(features[0:rowIndex-10]):
+            model.fit(features[train], output[train])
+            predictions = model.predict(np.array(features[test]))
+            convertedActual, convertedPredictions = convertCharToNumber(output,predictions)
+            temp.append(mean_squared_error(convertedActual[test],convertedPredictions))
+        mean_error.append(np.array(temp).mean())
+        std_error.append(np.array(temp).std())
+    print("Mean Error = ", mean_error)
+    print("Standard Deviation Error = ", std_error)
+    # graphErrorBar(Ci_range, mean_error, std_error)
+
 def LogisticReg(features, output, rowIndex): 
     Ci_range = [ 
         0.001, .01, .1, 1, 10, 1000
@@ -141,6 +171,26 @@ def LogisticReg(features, output, rowIndex):
         printPerformance(probabilities, predictions, output, rowIndex, C, f1_scores, "* LogisticRegression *")
     print("SCORES: ", f1_scores)
     plotCrossValidation(Ci_range, f1_scores, 'C Values', 'F1 Score', "* logisticReg *")
+
+def Kknn(features, output, rowIndex): 
+    Ki_range = [ 
+        2, 3, 4, 5, 6
+    ]
+    mean_error=[]; std_error=[]
+    for n_neighbours in Ki_range:
+        model = KNeighborsClassifier(n_neighbours, weights='uniform')
+        temp = []
+        kf = KFold(n_splits=5)
+        for train, test in kf.split(features[0:rowIndex-10]):
+            model.fit(features[train], output[train])
+            predictions = model.predict(np.array(features[test]))
+            convertedActual, convertedPredictions = convertCharToNumber(output,predictions)
+            temp.append(mean_squared_error(convertedActual[test],convertedPredictions))
+        mean_error.append(np.array(temp).mean())
+        std_error.append(np.array(temp).std())
+    print("Mean Error = ", mean_error)
+    print("Standard Deviation Error = ", std_error)
+    # graphErrorBar(Ci_range, mean_error, std_error)
 
 def knn(features, output, rowIndex): 
     Ki_range = [ 
@@ -163,7 +213,7 @@ def randomClassifier(features, output, rowIndex):
     predictions = dummy_clf.predict(np.array(features[rowIndex-10:rowIndex+1]))
     printPerformance(probabilities, predictions, output, rowIndex, "* RandomClassifier *")
 
-def KFlassoReg(features, output, rowIndex): 
+def KLassoReg(features, output, rowIndex): 
     C=1
     linearOutput = np.where(output == 'A', -1.0, output)
     linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
@@ -185,6 +235,7 @@ def KFlassoReg(features, output, rowIndex):
         std_error.append(np.array(temp).std())
     print("Mean Error = ", mean_error)
     print("Standard Deviation Error = ", std_error)
+    # graphErrorBar(Ci_range, mean_error, std_error)
 
 def lassoReg(features, output, rowIndex): 
     #C=1
@@ -204,6 +255,30 @@ def lassoReg(features, output, rowIndex):
     print("SCORES: ", f1_scores)
     plotCrossValidation(Ci_range, f1_scores, 'C Values', 'F1 Score', "* lassoReg *")
 
+def KRidgeReg(features, output, rowIndex): 
+    C=1
+    linearOutput = np.where(output == 'A', -1.0, output)
+    linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
+    linearOutput = np.where(linearOutput == 'D', 0.0, linearOutput)
+    Ci_range = [ 
+        0.5, 1, 5, 10, 50, 100
+    ]
+    mean_error=[]; std_error=[]
+    for C in Ci_range:
+        model = linear_model.Ridge(alpha=1/(2*C))# warning said to increase number of iterations
+        temp = []
+        kf = KFold(n_splits=5)
+        for train, test in kf.split(features[0:rowIndex-10]):
+            model.fit(features[train], linearOutput[train])
+            predictions = model.predict(np.array(features[test]))
+            # printLassoRidgePerformance(linearOutput[test], predictions[test], output, rowIndex, C, "* lassoReg *")
+            temp.append(mean_squared_error(linearOutput[test],predictions))
+        mean_error.append(np.array(temp).mean())
+        std_error.append(np.array(temp).std())
+    print("Mean Error = ", mean_error)
+    print("Standard Deviation Error = ", std_error)
+    # graphErrorBar(Ci_range, mean_error, std_error)
+
 def ridgeReg(features, output, rowIndex): 
     #C=1
     # Try different values for C
@@ -219,7 +294,6 @@ def ridgeReg(features, output, rowIndex):
         model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f1_scores, "* ridgeReg *")
-
     print("SCORES: ", f1_scores)
     plotCrossValidation(Ci_range, f1_scores, 'C Values', 'F1 Score', "* ridgeReg *")
 
@@ -233,13 +307,26 @@ def plotCrossValidation(Clist, f1Score, xAxisTitle, yAxisTitle, title):
     plt.title(title)
     plt.show()
 
+def graphErrorBar(Ci_range, mean_error, std_error):
+    plt.title("5-fold cross-validation, Mean + Standard Deviation Error Vs C")
+    plt.plot(Ci_range, mean_error)
+    plt.errorbar(Ci_range, mean_error, yerr=std_error, fmt ='ro', label="Standard Deviation")
+    plt.xlabel("Ci") 
+    plt.xlim((0,50))
+    plt.ylabel("Mean square error")
+    plt.legend()
+    plt.show()
+
 def modelTraining(features, output, rowIndex):    
-    #  LogisticReg(features, output, rowIndex)
+    # KLogisticReg(features, output, rowIndex)
+    # LogisticReg(features, output, rowIndex)
+    # Kknn(features, output, rowIndex)
     # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
+    # KLassoReg(features, output, rowIndex)
     # lassoReg(features, output, rowIndex)
-    # ridgeReg(features, output, rowIndex)
-    KFlassoReg(features, output, rowIndex)
+    # KRidgeReg(features, output, rowIndex)
+    ridgeReg(features, output, rowIndex)
 
 rowIndex = 331
 gameweek = 33
