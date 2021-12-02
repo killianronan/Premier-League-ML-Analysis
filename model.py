@@ -152,6 +152,7 @@ def KLogisticReg(features, output, rowIndex):
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], output[train])
+            #if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'K-Fold Logistic Regression', rowIndex)
             predictions = model.predict(np.array(features[test]))
             printPerformance(0, output[test], predictions, output, rowIndex, C, f1_scores, "* LogisticReg *")
             convertedActual, convertedPredictions = convertCharToNumber(output,predictions)
@@ -170,6 +171,7 @@ def LogisticReg(features, output, rowIndex):
     for C in Ci_range:
         model = LogisticRegression(max_iter=1000, C = C, penalty="l2")
         model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
+        if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'Logistic Regression', rowIndex)  ## NEED TO EITHER PICK A C VALUE TO STICK WITH OR PASS C VALUE THROUGH TO THIS FUNCTION
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         probabilities = model.predict_proba(np.array(features[rowIndex-10:rowIndex+1]))
         printPerformance(probabilities, predictions, output, rowIndex, C, f1_scores, "* LogisticRegression *")
@@ -187,6 +189,7 @@ def Kknn(features, output, rowIndex):
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], output[train])
+            #if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'KNN', rowIndex) #Need to fix this one up a bit will do tomorrow
             predictions = model.predict(np.array(features[test]))
             printPerformance(0, output[test], predictions, output, rowIndex, n_neighbours, f1_scores, "* KNN *")
             convertedActual, convertedPredictions = convertCharToNumber(output,predictions)
@@ -232,6 +235,7 @@ def KLassoReg(features, output, rowIndex):
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], linearOutput[train])
+            if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'K-Lasso Regression', rowIndex)
             predictions = model.predict(np.array(features[test]))
             printLassoRidgePerformance(linearOutput[test], predictions, output, rowIndex, C, f1_scores, "* lassoReg *")
             temp.append(mean_squared_error(linearOutput[test],predictions))
@@ -253,6 +257,7 @@ def lassoReg(features, output, rowIndex):
     for C in Ci_range:
         model = linear_model.Lasso(alpha=1/(2*C))
         model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
+        if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'Lasso Regression', rowIndex)
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f1_scores, "* lassoReg *")
 
@@ -299,6 +304,33 @@ def ridgeReg(features, output, rowIndex):
         printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f1_scores, "* ridgeReg *")
     print("SCORES: ", f1_scores)
     plotF1Score(Ci_range, f1_scores, 'C Values', 'F1 Score', "* ridgeReg *")
+    
+def plotWeights(modelWeights, modelName, iterationNumber):
+    featureNames = ['Attendance', 'HomeWinStreak', 'HomeTotalPoints','HomeTotalGoalsScored', 'HomeTotalGoalsConceded', 'HomePreviousSeasonPoints', 'HomeTeamValue', 'AwayWinStreak', 'AwayTotalPoints', 'AwayTotalGoalsScored', 'AwayTotalGoalsConceded','AwayPreviousSeasonPoints','AwayTeamValue']
+    outcomes = ['Away Win', 'Draw', 'Home Win']
+    index = 0
+    print(modelWeights)
+    print(modelName)
+    print(iterationNumber)
+    plt.xlabel('Feature Name')
+    plt.ylabel('Feature Weight')
+    plt.xticks(rotation=45)
+    plt.rc('font', size=5)
+    plt.rcParams['figure.constrained_layout.use'] = True
+    if(len(modelWeights) != 13):
+        for outcome in modelWeights:
+            plt.figure(dpi=900)
+            plt.title('Weights for ' + modelName + ' model of outcome: ' + outcomes[index] + ' @ iteration no: ' + str(iterationNumber))           
+            plt.plot(featureNames, outcome, color='blue', marker='x', linestyle='dotted', linewidth=1, markersize=3)
+            plt.show()
+            index += 1
+    else:
+        plt.figure(dpi=900)
+        plt.title('Weights for ' + modelName + ' model of outcome win draw or loss @ iteration no: ' + str(iterationNumber))
+        plt.rcParams['figure.constrained_layout.use'] = True
+        plt.plot(featureNames, modelWeights, color='blue', marker='x', linestyle='dotted', linewidth=1, markersize=3)
+        plt.show()
+
 
 def drawGraphs(Ci_range, mean_error, std_error, f1_mean, f1_std_dev, model_name):
     # print("Mean Error = ", mean_error)
@@ -329,9 +361,9 @@ def graphErrorBar(Ci_range, mean_error, std_error, title):
     plt.show()
 
 def modelTraining(features, output, rowIndex):    
-    # KLogisticReg(features, output, rowIndex)
-    # LogisticReg(features, output, rowIndex)
-    Kknn(features, output, rowIndex)
+    #KLogisticReg(features, output, rowIndex)
+     LogisticReg(features, output, rowIndex)
+    #Kknn(features, output, rowIndex)
     # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
     # KLassoReg(features, output, rowIndex)
@@ -339,8 +371,8 @@ def modelTraining(features, output, rowIndex):
     # KRidgeReg(features, output, rowIndex)
     # ridgeReg(features, output, rowIndex)
 
-rowIndex = 331
-gameweek = 33
+rowIndex = 11
+gameweek = 2
 while gameweek < 34: #380 matches played by 20 teams 
     rowIndex+=10
     print("Gameweek: ", gameweek) 
