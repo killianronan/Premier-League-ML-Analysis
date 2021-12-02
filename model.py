@@ -89,6 +89,31 @@ def printPerformance(probabilities, predictions, output, rowIndex, title):
     # plt.title(title)
     # plt.show()
 
+def printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, title):
+    predictions[predictions<=-.33] = -1
+    predictions[predictions>=.33] = 1
+    predictions[abs(predictions)<1] = 0
+
+    print(title) 
+    # Alphabetical order left to right
+    print("Predicted result: ",predictions)
+    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
+
+    result = np.zeros((10, 1))
+    for i in range(10):
+        result[i] = linearOutput[i]
+    # print("ROC: ", roc_auc_score(output[rowIndex-10:rowIndex+1], predictions,  multi_class='ovr'))
+    confusion_m = confusion_matrix(result, predictions).ravel()
+    print("Confusion Matrix", confusion_m)
+    if(len(confusion_m)==9): # Gameweek 17 had no Draws so confusion matrix is 2x2 (need to handle this)
+        calulateMetrics(confusion_m)
+    print("\n")
+    # print(metrics.classification_report(np.array(output[rowIndex-10:rowIndex+1]), predictions, digits=3, zero_division=0))
+    # ConfusionMatrixDisplay.from_predictions(np.array(output[rowIndex-10:rowIndex+1]), predictions)
+    # title = "Confusion Matrix " + title + " Gameweek " + str(gameweek)
+    # plt.title(title)
+    # plt.show()
+
 def LogisticReg(features, output, rowIndex): 
     model = LogisticRegression(max_iter=1000, C=0.1, penalty="l2")
     model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
@@ -112,17 +137,13 @@ def randomClassifier(features, output, rowIndex):
 
 def lassoReg(features, output, rowIndex): 
     C=1
-    linearOutput = np.where(output == 'A', -1, output)
-    linearOutput = np.where(linearOutput == 'H', 1, linearOutput)
-    linearOutput = np.where(linearOutput == 'D', 0, linearOutput)
+    linearOutput = np.where(output == 'A', -1.0, output)
+    linearOutput = np.where(linearOutput == 'H', 1.0, linearOutput)
+    linearOutput = np.where(linearOutput == 'D', 0.0, linearOutput)
     model = linear_model.Lasso(alpha=1/(2*C))
     model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-    print("* Lasso *") 
-    # Alphabetical order left to right
-    print("Predicted result: ",predictions)
-    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
-    print("\n")
+    printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, "* lassoReg *")
 
 def ridgeReg(features, output, rowIndex): 
     C=1
@@ -133,22 +154,18 @@ def ridgeReg(features, output, rowIndex):
     model = linear_model.Ridge(alpha=1/(2*C))
     model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
     predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-    print("* Ridge *") 
-    # Alphabetical order left to right
-    print("Predicted result: ",predictions)
-    print("Actual result:    ",np.array(output[rowIndex-10:rowIndex+1]))
-    print("\n")
+    printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, "* ridgeReg *")
 
 def modelTraining(features, output, rowIndex):    
-    LogisticReg(features, output, rowIndex)
+    #LogisticReg(features, output, rowIndex)
     # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
     # lassoReg(features, output, rowIndex)
-    # ridgeReg(features, output, rowIndex)
+     ridgeReg(features, output, rowIndex)
 
-rowIndex = 11
-gameweek = 2
-while gameweek < 39: #380 matches played by 20 teams 
+rowIndex = 101
+gameweek = 10
+while gameweek < 11: #380 matches played by 20 teams 
     rowIndex+=10
     print("Gameweek: ", gameweek) 
     gameweekFeatures = np.column_stack((attendance[0:rowIndex],HomeWinStreak[0:rowIndex],HomeTotalPoints[0:rowIndex],HomeTotalGoalsScored[0:rowIndex],HomeTotalGoalsConceded[0:rowIndex],HomePreviousSeasonPoints[0:rowIndex],HomeTeamValue[0:rowIndex],AwayWinStreak[0:rowIndex],AwayTotalPoints[0:rowIndex],AwayTotalGoalsScored[0:rowIndex],AwayTotalGoalsConceded[0:rowIndex],AwayPreviousSeasonPoints[0:rowIndex],AwayTeamValue[0:rowIndex]))
