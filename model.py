@@ -278,6 +278,7 @@ def KRidgeReg(features, output, rowIndex):
         kf = KFold(n_splits=5)
         for train, test in kf.split(features[0:rowIndex-10]):
             model.fit(features[train], linearOutput[train])
+            if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'K Ridge Regression', rowIndex)  	#Same for this - getting called at each split of training data
             predictions = model.predict(np.array(features[test]))
             printLassoRidgePerformance(linearOutput[test], predictions, output, rowIndex, C, f1_scores, "* ridgeReg *")
             temp.append(mean_squared_error(linearOutput[test],predictions))
@@ -300,6 +301,7 @@ def ridgeReg(features, output, rowIndex):
     for C in Ci_range:
         model = linear_model.Ridge(alpha=1/(2*C))
         model.fit(features[0:rowIndex-10], linearOutput[0:rowIndex-10])
+        if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'Ridge Regression', rowIndex)  	#Same for this - getting called at each split of training data
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         printLassoRidgePerformance(linearOutput, predictions, output, rowIndex, C, f1_scores, "* ridgeReg *")
     print("SCORES: ", f1_scores)
@@ -310,22 +312,29 @@ def plotWeights(modelWeights, modelName, iterationNumber):
     outcomes = ['Away Win', 'Draw', 'Home Win']
     index = 0
     print(modelWeights)
+    print(len(modelWeights))
     print(modelName)
     print(iterationNumber)
-    plt.xlabel('Feature Name')
-    plt.ylabel('Feature Weight')
-    plt.xticks(rotation=45)
-    plt.rc('font', size=5)
-    plt.rcParams['figure.constrained_layout.use'] = True
+   
     if(len(modelWeights) != 13):
         for outcome in modelWeights:
-            plt.figure(dpi=900)
+            plt.figure(dpi=450)
+            plt.xlabel('Feature Name')
+            plt.ylabel('Feature Weight')
+            plt.xticks(rotation=45)
+            plt.rc('font', size=5)
+            plt.rcParams['figure.constrained_layout.use'] = True
             plt.title('Weights for ' + modelName + ' model of outcome: ' + outcomes[index] + ' @ iteration no: ' + str(iterationNumber))           
             plt.plot(featureNames, outcome, color='blue', marker='x', linestyle='dotted', linewidth=1, markersize=3)
             plt.show()
             index += 1
     else:
-        plt.figure(dpi=900)
+        plt.figure(dpi=450)
+        plt.xlabel('Feature Name')
+        plt.ylabel('Feature Weight')
+        plt.xticks(rotation=45)
+        plt.rc('font', size=5)
+        plt.rcParams['figure.constrained_layout.use'] = True
         plt.title('Weights for ' + modelName + ' model of outcome win draw or loss @ iteration no: ' + str(iterationNumber))
         plt.rcParams['figure.constrained_layout.use'] = True
         plt.plot(featureNames, modelWeights, color='blue', marker='x', linestyle='dotted', linewidth=1, markersize=3)
@@ -362,14 +371,14 @@ def graphErrorBar(Ci_range, mean_error, std_error, title):
 
 def modelTraining(features, output, rowIndex):    
     #KLogisticReg(features, output, rowIndex)
-     LogisticReg(features, output, rowIndex)
+     #LogisticReg(features, output, rowIndex)
     #Kknn(features, output, rowIndex)
     # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
     # KLassoReg(features, output, rowIndex)
     # lassoReg(features, output, rowIndex)
-    # KRidgeReg(features, output, rowIndex)
-    # ridgeReg(features, output, rowIndex)
+    #KRidgeReg(features, output, rowIndex)
+     ridgeReg(features, output, rowIndex)
 
 rowIndex = 11
 gameweek = 2
