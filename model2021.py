@@ -9,29 +9,29 @@ from sklearn import linear_model
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 
-scores1819 = pd.read_csv("cleaned201819scores.csv")
-weekNumber = scores1819.iloc[:,1]
-attendance = scores1819.iloc[:,2]
-FTHomeGoals = scores1819.iloc[:,3]
-HomeTeam = scores1819.iloc[:,4]
-HomeWinStreak = scores1819.iloc[:,5]
-HomeTotalWins = scores1819.iloc[:,6]
-HomeTotalPoints = scores1819.iloc[:,7]
-HomeTotalGoalsScored = scores1819.iloc[:,8]
-HomeTotalGoalsConceded = scores1819.iloc[:,9] # Maybe do a total for the past 5 games to get a more accurate estimate
-HomePreviousSeasonPoints = scores1819.iloc[:,10]
-HomeTeamValue = scores1819.iloc[:,11]
-FTAwayGoals = scores1819.iloc[:,12]
-AwayTeam = scores1819.iloc[:,13]
-AwayWinStreak = scores1819.iloc[:,14]
-AwayTotalWins = scores1819.iloc[:,15]
-AwayTotalPoints = scores1819.iloc[:,16]
-AwayTotalGoalsScored = scores1819.iloc[:,17]
-AwayTotalGoalsConceded = scores1819.iloc[:,18]
-AwayPreviousSeasonPoints = scores1819.iloc[:,19]
-AwayTeamValue = scores1819.iloc[:,20]
-matchResult = scores1819.iloc[:,21]
-features1819 = np.column_stack((attendance,HomeWinStreak,HomeTotalPoints,HomeTotalGoalsScored,HomeTotalGoalsConceded,HomePreviousSeasonPoints,HomeTeamValue,AwayWinStreak,AwayTotalPoints,AwayTotalGoalsScored,AwayTotalGoalsConceded,AwayPreviousSeasonPoints,AwayTeamValue)) 
+scores2021 = pd.read_csv("cleaned202021scores.csv")
+weekNumber = scores2021.iloc[:,1]
+attendance = scores2021.iloc[:,2]
+FTHomeGoals = scores2021.iloc[:,3]
+HomeTeam = scores2021.iloc[:,4]
+HomeWinStreak = scores2021.iloc[:,5]
+HomeTotalWins = scores2021.iloc[:,6]
+HomeTotalPoints = scores2021.iloc[:,7]
+HomeTotalGoalsScored = scores2021.iloc[:,8]
+HomeTotalGoalsConceded = scores2021.iloc[:,9] # Maybe do a total for the past 5 games to get a more accurate estimate
+HomePreviousSeasonPoints = scores2021.iloc[:,10]
+HomeTeamValue = scores2021.iloc[:,11]
+FTAwayGoals = scores2021.iloc[:,12]
+AwayTeam = scores2021.iloc[:,13]
+AwayWinStreak = scores2021.iloc[:,14]
+AwayTotalWins = scores2021.iloc[:,15]
+AwayTotalPoints = scores2021.iloc[:,16]
+AwayTotalGoalsScored = scores2021.iloc[:,17]
+AwayTotalGoalsConceded = scores2021.iloc[:,18]
+AwayPreviousSeasonPoints = scores2021.iloc[:,19]
+AwayTeamValue = scores2021.iloc[:,20]
+matchResult = scores2021.iloc[:,21]
+features2021 = np.column_stack((attendance,HomeWinStreak,HomeTotalPoints,HomeTotalGoalsScored,HomeTotalGoalsConceded,HomePreviousSeasonPoints,HomeTeamValue,AwayWinStreak,AwayTotalPoints,AwayTotalGoalsScored,AwayTotalGoalsConceded,AwayPreviousSeasonPoints,AwayTeamValue)) 
 
 def calculate2x2Metrics(confusion_m):
     tp = confusion_m[0]
