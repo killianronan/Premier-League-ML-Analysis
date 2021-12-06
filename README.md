@@ -1,4 +1,9 @@
 # Premier-League-ML-Analysis
+The file lxmlScraper.py is the scraper file used for retrieving the data and generating the CSV files found in the sample datasets folder.
+
+The file model.py contains each of our models trained gameweek by gameweek.
+
+# Project Introduction
 The outcomes of football games are notoriously hard to predict, with games won by the finest of margins and the deemed ‘favourite’ never being a sure thing. Given this seemingly unpredictable nature and our interest in the sport, we decided to focus our project on the prediction of match results in the English Premier League 2018/19. We knew that finding statistics on each season on the internet would not be difficult as it is one of the most popular and media-covered competitions in the world. We trained Logistic Regression, Lasso Regression, Ridge Regression, and K-nearest neighbours classifier models, hoping to analyse, and to gauge the performance of each model with predicting matches. We will use our models to predict the outcome of matches through each gameweek, using the previous gameweeks as training data. As the training data grows with each gameweek, we hope to see better accuracy with our predictions. We also wish to investigate which features carry the highest weights, once the model has been trained i.e. which metrics have the greatest impact on the outcome of these games. We will then use a random baseline classifier to compare all of these models against. We used the following features as inputs for each of our models: 
 
 Attendance
