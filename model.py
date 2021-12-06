@@ -8,6 +8,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn import linear_model
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import ConfusionMatrixDisplay
 
 scores1819 = pd.read_csv("cleaned201819scores.csv")
 weekNumber = scores1819.iloc[:,1]
@@ -204,8 +205,10 @@ def Kknn(features, output, rowIndex):
         accuracy_mean.append(np.array(accuracy_scores).mean())
         accuracy_std_dev.append(np.array(accuracy_scores).std())
     graphErrorBar(Ki_range, mean_error, std_error, "KNN - Mean Squared Error", "Mean Squared", "Ki")
-    graphErrorBar(Ki_range, f1_mean, f1_std_dev, "KNN - F1 Score", "F1 Score", "Ki")
-    graphErrorBar(Ki_range, accuracy_mean, accuracy_std_dev, "KNN - Accuracy Score", "Accuracy Score", "Ki")
+    # graphErrorBar(Ki_range, f1_mean, f1_std_dev, "KNN - F1 Score", "F1 Score", "Ki")
+    # graphErrorBar(Ki_range, accuracy_mean, accuracy_std_dev, "KNN - Accuracy Score", "Accuracy Score", "Ki")
+    graphAccuracyF1Error(Ki_range, f1_mean, f1_std_dev, accuracy_mean, accuracy_std_dev, "KNN - Accuracy Score", "Accuracy Score", "Ki")
+
 
 def knn(features, output, rowIndex): 
     Ki_range = [2, 3, 4, 5, 6]
@@ -215,6 +218,9 @@ def knn(features, output, rowIndex):
         model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
         predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
         calculateLogisticKNNPerformance(predictions, output[rowIndex-10:rowIndex+1], f1_scores, accuracy_scores)
+        ConfusionMatrixDisplay.from_predictions(np.array(output[rowIndex-10:rowIndex+1]), predictions)
+        plt.title(str(n_neighbours) + " Neighbours")
+        plt.show()
     plotPerformance(Ki_range, f1_scores, 'K Values', 'F1 Score', "F1 Performance")
     plotPerformance(Ki_range, accuracy_scores, 'K Values', 'Accuracy Score', "Accuracy Performance")
 
@@ -362,20 +368,31 @@ def graphErrorBar(Ci_range, mean_error, std_error, title, label, xLabel):
     plt.legend()
     plt.show()
 
+def graphAccuracyF1Error(Ci_range, mean_error, std_error, mean_error2, std_error2, title, label, xLabel):
+    plt.title(title)
+    plt.plot(Ci_range, mean_error)
+    plt.plot(Ci_range, mean_error2)
+    plt.errorbar(Ci_range, mean_error, yerr=std_error, fmt ='ro', label="F1", ecolor='r', color='red')
+    plt.errorbar(Ci_range, mean_error2, yerr=std_error2, fmt ='ro', label="Accuracy", ecolor='black', color='black')
+    plt.xlabel(xLabel) 
+    plt.ylabel("F1 Accuracy & Accuracy")
+    plt.legend()
+    plt.show()
+
 def modelTraining(features, output, rowIndex):    
     # KLogisticReg(features, output, rowIndex)
     # logisticReg(features, output, rowIndex)
     # Kknn(features, output, rowIndex)
-    # knn(features, output, rowIndex)
+    knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
     # KLassoReg(features, output, rowIndex)
     # lassoReg(features, output, rowIndex)
     # KRidgeReg(features, output, rowIndex)
-    ridgeReg(features, output, rowIndex)
+    # ridgeReg(features, output, rowIndex)
 
 rowIndex = 11
 gameweek = 2
-while gameweek < 38: #380 matches played by 20 teams 
+while gameweek < 39: #380 matches played by 20 teams 
     rowIndex+=10
     print("Gameweek: ", gameweek) 
     gameweekFeatures = np.column_stack((attendance[0:rowIndex],HomeWinStreak[0:rowIndex],HomeTotalPoints[0:rowIndex],HomeTotalGoalsScored[0:rowIndex],HomeTotalGoalsConceded[0:rowIndex],HomePreviousSeasonPoints[0:rowIndex],HomeTeamValue[0:rowIndex],AwayWinStreak[0:rowIndex],AwayTotalPoints[0:rowIndex],AwayTotalGoalsScored[0:rowIndex],AwayTotalGoalsConceded[0:rowIndex],AwayPreviousSeasonPoints[0:rowIndex],AwayTeamValue[0:rowIndex]))
