@@ -187,15 +187,17 @@ def logisticReg(features, output, rowIndex):
     f1_scores = []; accuracy_scores = []
     for C in Ci_range:
         model = LogisticRegression( C = C, penalty="l2")
-        model.fit(features[0:rowIndex-10], output[0:rowIndex-10])
-        print("Intercept = ", model.intercept_)
-        print("Coefficient = ", model.coef_)
+        model.fit(features[0:rowIndex-80], output[0:rowIndex-80])
+        # print("Intercept = ", model.intercept_)
+        # print("Coefficient = ", model.coef_)
         # if(rowIndex == 21 or rowIndex == 151 or rowIndex == 251 or rowIndex == 351): plotWeights(model.coef_ , 'Logistic Regression', rowIndex)  ## NEED TO EITHER PICK A C VALUE TO STICK WITH OR PASS C VALUE THROUGH TO THIS FUNCTION
-        predictions = model.predict(np.array(features[rowIndex-10:rowIndex+1]))
-        
-        calculateLogisticKNNPerformance(predictions, output[rowIndex-10:rowIndex+1], f1_scores, accuracy_scores)
+        predictions = model.predict(np.array(features[rowIndex-80:rowIndex+1]))
+        ConfusionMatrixDisplay.from_predictions(np.array(output[rowIndex-80:rowIndex+1]), predictions)
+        plt.title("C = " + str(C))
+        plt.show()
+        calculateLogisticKNNPerformance(predictions, output[rowIndex-80:rowIndex+1], f1_scores, accuracy_scores)
     # plotPerformance(Ci_range, f1_scores, 'C Values', 'F1 Score', "Logistic F1 Performance")
-    plotPerformance(Ci_range, accuracy_scores, 'C Values', 'Accuracy Score', "Logistic Accuracy Performance")
+    # plotPerformance(Ci_range, accuracy_scores, 'C Values', 'Accuracy Score', "Logistic Accuracy Performance")
 
 def Kknn(features, output, rowIndex): 
     Ki_range = [2, 3, 4, 5, 6]
@@ -280,7 +282,7 @@ def lassoReg(features, output, rowIndex):
     linearOutput = np.where(linearOutput == 'H', 1, linearOutput)
     linearOutput = np.where(linearOutput == 'D', 0, linearOutput)
     # Ci_range = [0.5, 1, 5, 10, 50, 100]
-    Ci_range = [1, 10]
+    Ci_range = [10]
     f1_scores = []; accuracy_scores = []
     for C in Ci_range:
         model = linear_model.Lasso(alpha=1/(2*C))
@@ -414,15 +416,15 @@ def modelTraining(features, output, rowIndex):
     # KLogisticReg(features, output, rowIndex)
     # logisticReg(features, output, rowIndex)
     # Kknn(features, output, rowIndex)
-    knn(features, output, rowIndex)
+    # knn(features, output, rowIndex)
     # randomClassifier(features, output, rowIndex)
     # KLassoReg(features, output, rowIndex)
-    # lassoReg(features, output, rowIndex)
+    lassoReg(features, output, rowIndex)
     # KRidgeReg(features, output, rowIndex)
     # ridgeReg(features, output, rowIndex)
 
-rowIndex = 361
-gameweek = 37
+rowIndex = 11
+gameweek = 2
 while gameweek < 39: #380 matches played by 20 teams 
     rowIndex+=10
     print("Gameweek: ", gameweek) 
